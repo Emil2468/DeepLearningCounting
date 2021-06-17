@@ -1,5 +1,5 @@
 # CountAllTheTrees
-This repository contains code for the DLC-package (deep learning counting).
+This repository will soon contain code for the DLC-package (deep learning counting).
 ## What is DLC?
 DLC is a package intended to make it easier to implement, train and maintain models used in satellite image based machine learning tasks. Using different preprocessing steps it will be possible to create labels for both counting and segmentation tasks. Moreover it is made in a way that makes it easy to implement and train new models, that will be accessible through the command line interface along with possible configuration variables, that will also be exposed to the command line. Thus making it easier to train many different models with different configurations, without the need of a graphical user interface, and all accessible through a single command and a number of command line arguments.
 
