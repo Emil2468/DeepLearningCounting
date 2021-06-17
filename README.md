@@ -36,7 +36,7 @@ dlc preprocess \
 ```
 This will generate two images for each annotated area in `rectangles.gpkg` using the tiles in `/home/data/images/` and object annotations in `polygons.gpkg`. For each annotated area `AltImageFrameCreator` will simply write the image data corresponding to that area, while `UniformDensityFrameCreator` will write an image that is 0 everywhere except in the polygons described in `polygons.gpkg`, where it will write a value such that the sum of the pixels the the polygon sums to the number of objects in the polygon (which is not necessarily one, see info on count_heuristic below). The frames will be written to `/home/dataset/frames/` and a `frames.geojson` will also be written to this location, which contains the paths to the different frames, and some scalars about each frame as computed by the `ScalarFrameDataCreator`. 
 
-The filename of the polygons and rectangles can be changed by setting `--polygons_filename` and `--rectanlges_filename` arguments respectively, and can these arguments take the path to the geopandas package relative to the `dataset_path`. 
+The filename of the polygons and rectangles can be changed by setting `--polygons_filename` and `--rectanlges_filename` arguments respectively, these arguments take the path to the geopandas package relative to the `dataset_path`. 
 
 `--output_path` denotes that the extracted frames will be put in `/home/dataset/frames/`
 
@@ -105,13 +105,12 @@ dlc/trainers/YourModelName/
   trainer.py
 ```
 In the config.py file implement the config class, it must be named Config, and the \_\_init\_\_ function must only take the `self` argument. All variables in the config class can be exposed to the CLI, meaning they can be altered when calling dlc by adding a keyword argument to the command line. Eg to set the vairable `var` to the value "foo" you should add the argument `--var foo` when calling the script. To expose the config variables to the CLI the variables must be defined as class variables, must not start with an underscore, and must have type annotations. The class used to parse a configuration class to an argument parser does not support every type, only the following are supported:
-* int, float, bool, str
-* List[{int, float, str, bool}] (only 1 dimensional lists and lists that contain only one type are supported)
-* Tuple[{int, float, str, bool}*] (type annotations for each element in the tuple must be given, and nested tuples are not supported)
-* numpy arrays of int, float, str or bool (only 1 dimensional numpy arrays that contain only one type are supported). The type of the elements of a numpy array is dictated by the first element in the default value, if this value is `None`, type `str` is assumed.
-* Optional[{int, float, bool, str}] Giving the string value "None" to an argument with the Optional type will result in a `None` value, all other values will be tried to convert to the inner type of the optional.
-* Any type `t` that can be correctly instantiated using a string value `s` as `t(s)`. This could include custom classes.
-* There are no checks that the given types are supported, so errors may happen silently if non-supported types are given.
+1. int, float, bool, str, Any type `t` that can be correctly instantiated using a string value `s` as `t(s)`. This could include custom classes.
+2. List of any types from 1. (only 1 dimensional lists and lists that contain only one type are supported)
+3. Tuples of any types from 1. (type annotations for each element in the tuple must be given, and nested tuples are not supported)
+4. numpy arrays of any type from 1. (only 1 dimensional numpy arrays that contain only one type are supported). The type of the elements of a numpy array is dictated by the first element in the default value, if this value is `None`, type `str` is assumed.
+5. Optionals of any type from 1. Giving the string value "None" to an argument with the Optional type will result in a `None` value, all other values will be tried to convert to the inner type of the optional.
+6. There are no checks that the given types are supported, so errors may happen silently if non-supported types are given.
 
 In the \_\_init\_\_ function all the class variables must be set as instance variables as well. This can for example be done using the following snippet
 ```
