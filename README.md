@@ -1,5 +1,7 @@
 # CountAllTheTrees
-This repository will soon contain code for the DLC-package (deep learning counting).
+This repository contains code for the DLC-package (deep learning counting).
+## Contributors
+The authors of each file is denoted in the files.
 ## What is DLC?
 DLC is a package intended to make it easier to implement, train and maintain models used in satellite image based machine learning tasks. Using different preprocessing steps it will be possible to create labels for both counting and segmentation tasks. Moreover it is made in a way that makes it easy to implement and train new models, that will be accessible through the command line interface along with possible configuration variables, that will also be exposed to the command line. Thus making it easier to train many different models with different configurations, without the need of a graphical user interface, and all accessible through a single command and a number of command line arguments.
 
@@ -113,17 +115,22 @@ In the config.py file implement the config class, it must be named Config, and t
 6. There are no checks that the given types are supported, so errors may happen silently if non-supported types are given.
 
 In the \_\_init\_\_ function all the class variables must be set as instance variables as well. This can for example be done using the following snippet
-```
-def __init__(self) -> None:
-  [
-      setattr(self, k, v)
-      for k, v in type(self).__dict__.items()
-      if not k.startswith("_")
-  ]
-```
-The reason for this detour for setting the config variables is that the type hints can only be fetched from the class variables, however I believe instance variables to provide a better interface for the config classes, since then the code is passing specific instances around, and not classes resulting in nicer type annotations.
+```python
+class Config:
+  # define config-vars here
 
-In trainer.py you implement the actual model and training loop. The trainer should at least implement the interface of the BaseTrainer found in dlc/trainers/base_trainer.py. 
+  def __init__(self) -> None:
+    [
+        setattr(self, k, v)
+        for k, v in vars(Config).items()
+        if not k.startswith("_")
+    ]
+```
+The reason for this detour for setting the config variables is that the type hints can only be fetched from the class variables, however I believe instance variables to provide a better interface for the config classes, since then the code is passing specific instances around, and not classes resulting in nicer type annotations for functions taking `Config`-objects as argument.
+
+Config classes can inherit from each other, if that is the case, just call `super().__init__()` before setting all the instance variables in the `__init__` function. 
+
+In trainer.py you implement the actual model and training loop. The trainer should at least implement the interface of the BaseTrainer found in dlc/trainers/base_trainer.py. If you implement a trainer for other trainers to inherit from, but not to be run on its own, that trainer should be implemented in dlc/models/, see dlc/models/UnetBasedTrainer/ for an example. This ensures that all modules in dlc/trainers/ are run-able trainers, so in a future version of the package each module in dlc/trainers/ can be listed as the options for the `trainer` argument in the command line.
 
 The \_\_init\_\_.py you should write
 ```
