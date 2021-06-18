@@ -1,4 +1,4 @@
-# CountAllTheTrees
+# DeepLearningCounting
 This repository contains code for the DLC-package (deep learning counting).
 ## Contributors
 The authors of each file are denoted in the files.
@@ -13,7 +13,7 @@ pip install <path-to-repository>
 Afterwards the package can be accessed by calling `dlc` from the command line.
 
 ## Terminology
-In the following I will use the terms tile, frame and patch. A tile is a satellite image. Within some tiles selected areas are annotated, meaning the trees within that area are annotated, each such area is called a frame. Since frames are not of consistent size, and some frames are very large, smaller patches of for example $256 \times 256$ pixels are fed to the model at a time, each of these are called a patch.
+In the following I will use the terms tile, frame and patch. These terms are relevant to the data used in https://www.nature.com/articles/s41586-020-2824-5, however similar terms should be applicable in other satellite image datasets. A tile is a satellite image. Within some tiles selected areas are annotated, meaning the trees within that area are annotated, each such area is called a frame. Since frames are not of consistent size, and some frames are very large, smaller patches of for example $256 \times 256$ pixels are fed to the model at a time, each of these are called a patch.
 
 ## Demo
 The package comes in handy in 4 different steps of the pipeline, preprocessing, training, evaluation and prediction. The demo assumes that folder `/home/dataset/` has the following structure
@@ -40,17 +40,17 @@ dlc preprocess \
   --frame_creators UniformDensityFrameCreator AltImageFrameCreator ScalarFrameDataCreator
   --count_heuristic sahel_count_heuristic
 ```
-This will generate two images for each annotated area in `rectangles.gpkg` using the tiles in `/home/data/images/` and object annotations in `polygons.gpkg`. For each annotated area `AltImageFrameCreator` will simply write the image data corresponding to that area, while `UniformDensityFrameCreator` will write an image that is 0 everywhere except in the polygons described in `polygons.gpkg`, where it will write a value such that the sum of the pixels the the polygon sums to the number of objects in the polygon (which is not necessarily one, see info on count_heuristic below). The frames will be written to `/home/dataset/frames/` and a `frames.geojson` will also be written to this location, which contains the paths to the different frames, and some scalars about each frame as computed by the `ScalarFrameDataCreator`. 
+This will generate two images for each annotated area in `rectangles.gpkg` using the tiles in `/home/data/images/` and object annotations in `polygons.gpkg`.
 
 The filename of the polygons and rectangles can be changed by setting `--polygons_filename` and `--rectanlges_filename` arguments respectively, these arguments take the path to the geopandas package relative to the `dataset_path`. 
 
 `--output_path` denotes that the extracted frames will be put in `/home/dataset/frames/`
 
-`--frame_creators` takes any number of arguments and are used to dictate what types of frames should be extracted from the tiles. All frame creators are defined in `dlc/tools/frames.py`
+`--frame_creators` takes any number of arguments and are used to dictate what types of frames should be extracted from the tiles. All frame creators are defined in `dlc/tools/frames.py`. In the case above `AltImageFrameCreator` will simply write the image data corresponding to the frame, while `UniformDensityFrameCreator` will write an image that is 0 everywhere except in the polygons described in `polygons.gpkg`, where it will write a value such that the sum of the pixels the the polygon sums to the number of objects in the polygon (which is not necessarily one, see info on count_heuristic below). The frames will be written to `/home/dataset/frames/` and a `frames.geojson` will also be written to this location, which contains the paths to the different frames, and some scalars about each frame as computed by the `ScalarFrameDataCreator`.
 
 `--count_heuristic` decides what count heuristic is used when counting the polygons, `sahel_count_heuristic` counts polygons with area $A < 200m^2$ as a single object, while polygons with area $A \geq 200m^2$ counts as $A \times 3 \times 10^{-2}$ objects. Currently only `sahel_count_heuristic` and `None` are available. `None` will just count a each polygon as one object.
 
-For a full list of arguments to the preprocessing step, call `dlc preprocesss -h`
+For a full list of arguments and the default values to the preprocessing step, call `dlc preprocesss -h`
 
 ### Training
 The next steps of the demo will showcase the UnetUpsamplingPath model, which is one of 3 models currently implemented. All three models take the same arguments and perform the same task, but using different architectures. The arguments and functionality shown here are specifically implemented for these three models, and in the section "Adding your own models" I will go over how to implement new models, that possibly function in a different way or with different arguments.
@@ -75,7 +75,7 @@ This will train the model called `UnetUpsamplingPath` for 100 epochs on the fram
 
 The positional argument `UnetUpsamplingPath` is what model should be trained, currently `UnetUpsamplingPath`, `UnetTopConcatLayer` and `UnetBottomLayers` are available. They all work in the same way and take the same arguments, but use different architectures. See "Adding your own models" below for information on how to implement and expose your own models to the interface.
 
-To see all possible arguments for a specific model call `dlc train <model> -h`
+To see all possible arguments and the default values for a specific model call `dlc train <model> -h`
 
 ### Testing/evaluating
 To test a trained model the following can be used. Here it is assumed that `/home/dataset/test_frames` exists and contains preprocessed test frames.
@@ -101,7 +101,7 @@ dlc predict UnetUpsamplingPath \
   --input_image_keys image
   --output_file_path /home/predictions/preds.csv
 ```
-This will produce the count predictions of the frames in the test set and output those in a csv-file, with columns "Frame" and "Predicted count", it produces one row per patch and not per frame, so if a frame is large enough for multiple patches multiple rows will have the same frame name. The stride between patches during predictions is always equal to the patch size, meaning there is no overlap between patches, and padding in applied to the frames ensuring that the whole frame is included in the patches. Therefore the total count per frame can be found by grouping preds.csv by frame, and summing over the predicted count. 
+This will produce the count predictions of the frames in the test set and output those in a csv-file, with columns "Frame" and "Predicted count", it produces one row per patch and not per frame, so if a frame is large enough for multiple patches multiple rows will have the same frame name. The stride between patches during predictions is always equal to the patch size, meaning there is no overlap between patches. Padding is applied to the frames ensuring that the whole frame is included in the patches. Therefore the total count per frame can be found by grouping preds.csv by frame, and summing over the predicted count. 
 
 ## Adding your own models
 New models can easily be implemented by following the interface of the other models. To add a model with the name YourModelName, create a folder `dlc/trainers/YourModelName` in this folder create 3 files:
