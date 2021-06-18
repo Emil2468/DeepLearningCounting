@@ -1,7 +1,7 @@
 # CountAllTheTrees
 This repository contains code for the DLC-package (deep learning counting).
 ## Contributors
-The authors of each file is denoted in the files.
+The authors of each file are denoted in the files.
 ## What is DLC?
 DLC is a package intended to make it easier to implement, train and maintain models used in satellite image based machine learning tasks. Using different preprocessing steps it will be possible to create labels for both counting and segmentation tasks. Moreover it is made in a way that makes it easy to implement and train new models, that will be accessible through the command line interface along with possible configuration variables, that will also be exposed to the command line. Thus making it easier to train many different models with different configurations, without the need of a graphical user interface, and all accessible through a single command and a number of command line arguments.
 
@@ -11,6 +11,10 @@ Clone this repository, then run
 pip install <path-to-repository>
 ```
 Afterwards the package can be accessed by calling `dlc` from the command line.
+
+## Terminology
+In the following I will use the terms tile, frame and patch. A tile is a satellite image. Within some tiles selected areas are annotated, meaning the trees within that area are annotated, each such area is called a frame. Since frames are not of consistent size, and some frames are very large, smaller patches of for example $256 \times 256$ pixels are fed to the model at a time, each of these are called a patch.
+
 ## Demo
 The package comes in handy in 4 different steps of the pipeline, preprocessing, training, evaluation and prediction. The demo assumes that folder `/home/dataset/` has the following structure
 ```
@@ -80,6 +84,7 @@ dlc evaluate UnetUpsamplingPath \
   --test_frames_file_path /home/dataset/test_frames/frames.geojson \
   --whole_model_file_path /home/models/unet_upsampling_path.h5 \
   --input_image_keys image
+  --output_image_keys uniform-density
 ```
 This will evaluate the trained Unet Upsampling path model as trained before, and print the loss, accuracy and $R^2$ value.
 
@@ -110,7 +115,7 @@ In the config.py file implement the config class, it must be named Config, and t
 1. int, float, bool, str, Any type `t` that can be correctly instantiated using a string value `s` as `t(s)`. This could include custom classes.
 2. List of any types from 1. (only 1 dimensional lists and lists that contain only one type are supported)
 3. Tuples of any types from 1. (type annotations for each element in the tuple must be given, and nested tuples are not supported)
-4. numpy arrays of any type from 1. (only 1 dimensional numpy arrays that contain only one type are supported). The type of the elements of a numpy array is dictated by the first element in the default value, if this value is `None`, type `str` is assumed.
+4. numpy arrays of any type from 1. (only 1 dimensional numpy arrays that contain only one type are supported). The type of the elements of a numpy array is dictated by the first element in the default value, if this value is `None` or the array is empty by default, type `str` is assumed.
 5. Optionals of any type from 1. Giving the string value "None" to an argument with the Optional type will result in a `None` value, all other values will be tried to convert to the inner type of the optional.
 6. There are no checks that the given types are supported, so errors may happen silently if non-supported types are given.
 
@@ -133,7 +138,7 @@ Config classes can inherit from each other, if that is the case, just call `supe
 In trainer.py you implement the actual model and training loop. The trainer should at least implement the interface of the BaseTrainer found in dlc/trainers/base_trainer.py. If you implement a trainer for other trainers to inherit from, but not to be run on its own, that trainer should be implemented in dlc/models/, see dlc/models/UnetBasedTrainer/ for an example. This ensures that all modules in dlc/trainers/ are run-able trainers, so in a future version of the package each module in dlc/trainers/ can be listed as the options for the `trainer` argument in the command line.
 
 The \_\_init\_\_.py you should write
-```
+```python
 from .config import Config
 from .trainer import Trainer
 ```
